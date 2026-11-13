@@ -1,0 +1,1263 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>MONSTER SNATCH MULTIPLAYER</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ background:linear-gradient(140deg,#10172c,#253b5c,#10172c);
+ color:white;
+ font-family:Arial;
+}
+header{
+ background:#111d32;
+ padding:14px;
+ position:sticky;
+ top:0;
+ z-index:5;
+ border-bottom:2px solid #526b8b;
+}
+.logo{color:#ffdc65;font-size:23px;font-weight:bold}
+.stats{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.pill{background:#344b68;padding:8px;border-radius:20px}
+main{max-width:1000px;margin:auto;padding:12px}
+nav{display:flex;gap:7px;overflow:auto;margin-bottom:12px}
+button{
+ border:0;border-radius:10px;padding:10px;
+ background:linear-gradient(135deg,#ffe47c,#ffad36);
+ font-weight:bold;cursor:pointer;margin:2px;
+}
+nav button{white-space:nowrap}
+.blue{background:linear-gradient(135deg,#80dfff,#488dff)}
+.green{background:linear-gradient(135deg,#9cffbd,#36cf7d)}
+.red{background:linear-gradient(135deg,#ff9da5,#ff455e)}
+.dark{background:#354c6b;color:white}
+.panel{
+ background:linear-gradient(145deg,#263d5c,#172740);
+ padding:14px;border-radius:16px;margin-bottom:13px;
+ border:1px solid #ffffff25;box-shadow:0 7px 20px #0005;
+}
+h2{color:#ffdf76;margin-top:0}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(145px,1fr));
+ gap:10px;
+}
+.card{
+ background:#344c6b;padding:10px;border-radius:14px;
+ border:1px solid #ffffff25;overflow:hidden;
+}
+.art{
+ height:100px;border-radius:12px;display:grid;
+ place-items:center;font-size:58px;
+ background:linear-gradient(135deg,#5cbdc1,#394a83);
+ animation:bob 2s infinite;
+}
+@keyframes bob{50%{transform:translateY(-5px)}}
+.card h3{margin:8px 0 4px}
+.small{font-size:12px;color:#c4d3e7}
+.tag{
+ display:inline-block;background:#ffffff25;padding:4px 7px;
+ border-radius:15px;font-size:11px;margin:3px;
+}
+.actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+.actions button{flex:1;font-size:11px;padding:9px 5px}
+.hidden{display:none!important}
+.row{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:8px;flex-wrap:wrap;
+}
+.bar{
+ height:10px;background:#101827;border-radius:20px;
+ overflow:hidden;margin:7px 0;
+}
+.bar i{display:block;height:100%;background:#63f0a1}
+.bar.red i{background:#ff425f}
+.biomes{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+.biome{
+ padding:12px;text-align:center;background:#344c6b;border-radius:10px;
+}
+.biome.active{outline:2px solid #ffdc65}
+input,select{
+ width:100%;padding:11px;background:#14233a;color:white;
+ border:1px solid #6a809e;border-radius:9px;margin:5px 0;
+}
+.egg{text-align:center;font-size:50px;animation:bob 1.5s infinite}
+.toast{
+ position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+ background:#ffe47c;color:#17233a;padding:12px;border-radius:12px;
+ z-index:10;font-weight:bold;max-width:90%;text-align:center;
+}
+#authBox{max-width:450px;margin:45px auto;padding:20px}
+hr{border-color:#ffffff33}
+</style>
+</head>
+<body>
+
+<div id="authBox" class="panel">
+<h1>👾 MONSTER SNATCH</h1>
+<h2>Login / Daftar Pemain</h2>
+<input id="email" type="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password minimal 6 karakter">
+<button class="green" onclick="register()">Daftar Akun</button>
+<button class="blue" onclick="loginGame()">Login</button>
+<p id="authStatus" class="small">Hubungkan ke internet untuk bermain.</p>
+</div>
+
+<div id="game" class="hidden">
+<header>
+<div class="row">
+<div class="logo">👾 MONSTER SNATCH</div>
+<button class="dark" onclick="logout()">Keluar</button>
+</div>
+<div class="stats">
+<span class="pill">🪙 <b id="coins">500</b></span>
+<span class="pill">🍖 <b id="food">5</b></span>
+<span class="pill">🏠 <b id="owned">0</b>/20</span>
+<span class="pill">🏃 Lv <b id="level">1</b></span>
+</div>
+</header>
+
+<main>
+<div class="panel">
+<h1>🌎 MONSTER WORLD</h1>
+<p>Berikan makanan, curi monster, dan bawa pulang ke kandangmu!</p>
+<p class="small" id="timer">Menghubungkan dunia...</p>
+<p class="small" id="connection">Menunggu Firebase...</p>
+</div>
+
+<nav>
+<button onclick="page('world')">🌎 Dunia</button>
+<button onclick="page('base')">🏠 Base</button>
+<button onclick="page('shop')">🛒 Toko</button>
+<button onclick="page('tread')">🏃 Treadmill</button>
+<button onclick="page('events')">🎉 Event</button>
+<button onclick="page('index')">📖 Index</button>
+<button onclick="page('admin')">🔧 Admin</button>
+</nav>
+
+<section id="world">
+<div class="panel">
+<h2>🌈 10 BIOME</h2>
+<div class="biomes" id="biomes"></div>
+</div>
+<div class="panel">
+<div class="row">
+<h2>👾 Monster Liar</h2>
+<span id="spawnStatus"></span>
+</div>
+<div id="wild" class="grid"></div>
+</div>
+<div class="panel">
+<h2>🎒 Monster Dibawa</h2>
+<div id="carried">Belum membawa monster.</div>
+</div>
+</section>
+
+<section id="base" class="hidden">
+<div class="panel">
+<div class="row">
+<h2>🏠 Kandang Monster</h2>
+<button class="blue" onclick="best()">Lengkapi Terbaik</button>
+</div>
+<p class="small">Telur menetas dalam 1 menit. Maksimal 20 monster.</p>
+<div id="eggs" class="grid"></div>
+<div id="collection" class="grid"></div>
+</div>
+</section>
+
+<section id="shop" class="hidden">
+<div class="panel">
+<h2>🛒 TOKO MAKANAN</h2>
+<p>1 makanan = 40 koin</p>
+<button onclick="buy(1)">Beli 1</button>
+<button onclick="buy(5)">Beli 5 - 180 koin</button>
+</div>
+<div class="panel">
+<h2>💰 JUAL MONSTER</h2>
+<div id="sell" class="grid"></div>
+</div>
+</section>
+
+<section id="tread" class="hidden">
+<div class="panel">
+<h2>🏃 MONSTER TREADMILL</h2>
+<p>Level maksimal 20.</p>
+<select id="trainPick"></select>
+<div class="row">
+<b>Level: <span id="treadLevel">1</span>/20</b>
+<button onclick="upgrade()">Upgrade</button>
+</div>
+<div id="trainInfo"></div>
+<button class="green" onclick="train()">Latih Monster</button>
+</div>
+</section>
+
+<section id="events" class="hidden">
+<div class="panel">
+<h2>🎉 EVENT BERLANGSUNG</h2>
+<div id="eventList"></div>
+</div>
+</section>
+
+<section id="index" class="hidden">
+<div class="panel">
+<h2>📖 MONSTER INDEX</h2>
+<p id="indexCount"></p>
+<div id="indexList" class="grid"></div>
+</div>
+</section>
+
+<section id="admin" class="hidden">
+<div class="panel">
+<h2>🔐 ADMIN PANEL</h2>
+<div id="adminDenied">Panel hanya untuk Admin.</div>
+<div id="adminTools" class="hidden">
+<h3>➕ Buat Monster Bersama</h3>
+<input id="newName" placeholder="Nama monster">
+<select id="newRare">
+<option>Common</option>
+<option>Rare</option>
+<option>Epic</option>
+<option>Legendary</option>
+<option>Mutasi</option>
+</select>
+<select id="newSize">
+<option>Kecil</option>
+<option>Sedang</option>
+<option>Besar</option>
+<option>Raksasa</option>
+</select>
+<input id="newEmoji" placeholder="Emoji gambar" value="👾">
+<button onclick="createMonster()">Terbitkan Monster</button>
+<hr>
+<h3>🎊 Buat Event Bersama</h3>
+<input id="evName" placeholder="Nama event">
+<input id="evTheme" placeholder="Tema event">
+<label>Jadwal rilis</label>
+<input id="evDate" type="datetime-local">
+<input id="evDuration" type="number" placeholder="Durasi menit" value="60">
+<select id="evMonster"></select>
+<button class="green" onclick="createEvent()">Terbitkan Event</button>
+</div>
+</div>
+</section>
+</main>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script>
+const $ = id => document.getElementById(id);
+
+let auth = null;
+let db = null;
+let currentUser = null;
+let isAdmin = false;
+
+// KONFIGURASI FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyCcU95F75Bz98SqKbIwjlkCPlX3TIKmUGc",
+  authDomain: "steal-a-egg-2de36.firebaseapp.com",
+  databaseURL: "https://steal-a-egg-2de36-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "steal-a-egg-2de36",
+  storageBucket: "steal-a-egg-2de36.firebasestorage.app",
+  messagingSenderId: "",
+  appId: ""
+};
+
+// HUBUNGKAN FIREBASE
+try {
+  if (typeof firebase === "undefined") {
+    throw new Error("Firebase SDK tidak berhasil dimuat.");
+  }
+
+  firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  db = firebase.database();
+
+  console.log("Firebase berhasil terhubung!");
+} catch (error) {
+  console.error("Firebase error:", error);
+  alert("Firebase gagal terhubung: " + error.message);
+}
+
+// DAFTAR AKUN
+async function register() {
+  if (!auth) {
+    alert("Firebase belum terhubung. Periksa API Key dan koneksi internet.");
+    return;
+  }
+
+  const email = $("email")?.value.trim();
+  const password = $("password")?.value;
+
+  if (!email || !password) {
+    alert("Isi email dan password terlebih dahulu!");
+    return;
+  }
+
+  if (password.length < 6) {
+    alert("Password minimal 6 karakter!");
+    return;
+  }
+
+  try {
+    $("authStatus").textContent = "Membuat akun...";
+    await auth.createUserWithEmailAndPassword(email, password);
+    alert("Akun berhasil dibuat!");
+  } catch (error) {
+    alert("Gagal daftar: " + error.message);
+    $("authStatus").textContent = "Pendaftaran gagal.";
+  }
+}
+
+// LOGIN
+async function loginGame() {
+  if (!auth) {
+    alert("Firebase belum terhubung. Periksa API Key dan koneksi internet.");
+    return;
+  }
+
+  const email = $("email")?.value.trim();
+  const password = $("password")?.value;
+
+  if (!email || !password) {
+    alert("Isi email dan password terlebih dahulu!");
+    return;
+  }
+
+  try {
+    $("authStatus").textContent = "Sedang login...";
+    await auth.signInWithEmailAndPassword(email, password);
+  } catch (error) {
+    alert("Gagal login: " + error.message);
+    $("authStatus").textContent = "Login gagal.";
+  }
+}
+
+// LOGOUT
+async function logout() {
+  if (!auth) return;
+
+  try {
+    await auth.signOut();
+  } catch (error) {
+    alert("Gagal logout: " + error.message);
+  }
+}
+
+// STATUS LOGIN
+if (auth) {
+  auth.onAuthStateChanged(user => {
+    currentUser = user;
+    isAdmin = !!user &&
+      user.uid === "GgW8DgjSvvRh1ezkW5I8PxBH1WA2";
+
+    const loginPanel = $("loginPanel");
+    const gamePanel = $("gamePanel");
+
+    if (user) {
+      if (loginPanel) loginPanel.classList.add("hidden");
+      if (gamePanel) gamePanel.classList.remove("hidden");
+
+      if ($("playerEmail")) {
+        $("playerEmail").textContent = user.email || "Pemain";
+      }
+
+      if ($("adminPanel")) {
+        $("adminPanel").classList.toggle("hidden", !isAdmin);
+      }
+
+      if ($("authStatus")) {
+        $("authStatus").textContent = "Berhasil masuk!";
+      }
+
+      if (typeof startGame === "function") {
+        startGame();
+      }
+    } else {
+      if (loginPanel) loginPanel.classList.remove("hidden");
+      if (gamePanel) gamePanel.classList.add("hidden");
+      if ($("authStatus")) {
+        $("authStatus").textContent = "Silakan login atau daftar.";
+      }
+    }
+  });
+}
+</script>
+
+<script>
+// ===============================
+// DATA GAME
+// ===============================
+
+const rarities = [
+  "Common",
+  "Rare",
+  "Epic",
+  "Legendary",
+  "Mutasi"
+];
+
+const biomes = [
+  "Hutan",
+  "Gurun",
+  "Salju",
+  "Lava",
+  "Laut",
+  "Langit",
+  "Kegelapan",
+  "Kristal",
+  "Racun",
+  "Galaksi"
+];
+
+const monsterNames = [
+  "Slime","Goblin","Wolf","Fox","Bear",
+  "Rabbit","Deer","Boar","Bat","Frog",
+  "Ice Wolf","Snow Fox","Penguin","Yeti","Frost Bear",
+  "Fire Dragon","Magma Beast","Lava Golem","Flame Fox","Fire Wolf",
+  "Shark","Octopus","Whale","Sea Dragon","Jellyfish",
+  "Sky Bird","Cloud Lion","Thunder Hawk","Wind Spirit","Storm Dragon",
+  "Shadow Cat","Dark Wolf","Night Demon","Void Beast","Dark Dragon",
+  "Crystal Golem","Gem Fox","Diamond Beast","Crystal Dragon","Prism Wolf",
+  "Poison Snake","Toxic Frog","Venom Spider","Plague Beast","Poison Dragon",
+  "Galaxy Cat","Star Wolf","Cosmic Dragon","Nebula Beast","Universe King"
+];
+
+const monsterValues = [
+  10,15,20,25,30,35,40,45,50,55,
+  70,80,90,100,110,130,140,150,160,170,
+  200,220,240,260,280,300,320,340,360,380,
+  450,500,550,600,650,700,750,800,850,900,
+  1000,1100,1200,1300,1400,1600,1800,2000,2500,3000
+];
+
+let monsters = monsterNames.map((name, index) => ({
+  id: "monster_" + (index + 1),
+  name,
+  rarity: rarities[Math.floor(index / 10)],
+  biome: biomes[Math.floor(index / 5)],
+  value: monsterValues[index],
+  level: 1
+}));
+
+// ===============================
+// DATA PEMAIN
+// ===============================
+
+let playerData = {
+  coins: 500,
+  food: 5,
+  level: 1,
+  treadmill: 1,
+  inventory: [],
+  eggs: [],
+  currentMonster: null
+};
+
+function savePlayer() {
+  localStorage.setItem(
+    "monsterSnatchPlayer",
+    JSON.stringify(playerData)
+  );
+}
+
+function loadPlayer() {
+  try {
+    const saved = localStorage.getItem("monsterSnatchPlayer");
+    if (saved) {
+      const data = JSON.parse(saved);
+      if (data && typeof data === "object") {
+        playerData = {
+          ...playerData,
+          ...data
+        };
+      }
+    }
+  } catch (error) {
+    console.error("Data pemain gagal dibaca:", error);
+  }
+}
+
+loadPlayer();
+
+// ===============================
+// TAMPILAN GAME
+// ===============================
+
+function createGameUI() {
+  const panel = $("gamePanel");
+  if (!panel) return;
+
+  let area = $("gameContent");
+
+  if (!area) {
+    area = document.createElement("div");
+    area.id = "gameContent";
+    panel.appendChild(area);
+  }
+
+  area.innerHTML = `
+    <div class="game-box">
+      <h2>🐲 MONSTER SNATCH</h2>
+      <p>Email: <b id="playerEmail"></b></p>
+
+      <div class="stats">
+        <p>💰 Koin: <b id="coinCount">0</b></p>
+        <p>🍖 Makanan: <b id="foodCount">0</b></p>
+        <p>⭐ Level: <b id="levelCount">1</b></p>
+        <p>🏃 Treadmill: <b id="treadmillCount">1</b></p>
+      </div>
+
+      <h3>🌍 Biome</h3>
+      <div id="biomeButtons"></div>
+
+      <h3>🐾 Monster Muncul</h3>
+      <p id="spawnStatus">Menyiapkan monster...</p>
+      <div id="spawnMonster"></div>
+
+      <div class="game-actions">
+        <button onclick="feedMonster()">🍖 Beri Makan</button>
+        <button onclick="stealMonster()">🖐️ Ambil Monster</button>
+        <button onclick="jumpPlayer()">⬆️ Lompat</button>
+        <button onclick="releaseMonster()">📦 Lepaskan</button>
+        <button onclick="carryMonster()">🏠 Bawa ke Base</button>
+      </div>
+
+      <h3>🎒 Koleksi Monster</h3>
+      <div id="inventoryList"></div>
+
+      <h3>🥚 Telur</h3>
+      <div id="eggList"></div>
+
+      <h3>🛒 Toko Makanan</h3>
+      <p>Harga 1 makanan: 25 koin</p>
+      <button onclick="buyFood()">Beli Makanan</button>
+
+      <h3>🏃 Treadmill</h3>
+      <p>Naikkan level treadmill untuk meningkatkan bonus.</p>
+      <button onclick="upgradeTreadmill()">Upgrade Treadmill</button>
+
+      <h3>💰 Jual Monster</h3>
+      <p>Pilih monster dari koleksi untuk menjualnya.</p>
+
+      <h3>📅 Event</h3>
+      <div id="eventList"></div>
+
+      <button onclick="logout()">Keluar Akun</button>
+    </div>
+  `;
+
+  renderBiomes();
+  renderGame();
+}
+
+// ===============================
+// BIOME
+// ===============================
+
+let selectedBiome = "Hutan";
+
+function renderBiomes() {
+  const area = $("biomeButtons");
+  if (!area) return;
+
+  area.innerHTML = biomes.map(biome => `
+    <button onclick="selectBiome('${biome}')">
+      ${biome}
+    </button>
+  `).join("");
+}
+
+function selectBiome(biome) {
+  selectedBiome = biome;
+  spawnNewMonster();
+}
+
+// ===============================
+// SISTEM SPAWN
+// ===============================
+
+let spawnedMonster = null;
+let spawnVisible = false;
+let spawnTimer = null;
+
+function spawnNewMonster() {
+  const available = monsters.filter(m => m.biome === selectedBiome);
+
+  if (!available.length) return;
+
+  spawnedMonster = {
+    ...available[Math.floor(Math.random() * available.length)]
+  };
+
+  spawnVisible = true;
+  renderSpawn();
+  updateSpawnStatus("Monster muncul! Waktu muncul 10 menit.");
+
+  clearTimeout(spawnTimer);
+
+  spawnTimer = setTimeout(() => {
+    spawnVisible = false;
+    spawnedMonster = null;
+    renderSpawn();
+    updateSpawnStatus("Monster menghilang. Menunggu 2 menit...");
+
+    setTimeout(() => {
+      spawnNewMonster();
+    }, 120000);
+
+  }, 600000);
+}
+
+function updateSpawnStatus(message) {
+  const el = $("spawnStatus");
+  if (el) el.textContent = message;
+}
+
+function renderSpawn() {
+  const area = $("spawnMonster");
+  if (!area) return;
+
+  if (!spawnVisible || !spawnedMonster) {
+    area.innerHTML = "<p>Belum ada monster.</p>";
+    return;
+  }
+
+  area.innerHTML = `
+    <div class="monster-card">
+      <h3>🐲 ${spawnedMonster.name}</h3>
+      <p>Kelangkaan: ${spawnedMonster.rarity}</p>
+      <p>Biome: ${spawnedMonster.biome}</p>
+      <p>Nilai: ${spawnedMonster.value} koin</p>
+    </div>
+  `;
+}
+
+// ===============================
+// AKSI MONSTER
+// ===============================
+
+function feedMonster() {
+  if (!spawnedMonster || !spawnVisible) {
+    alert("Tidak ada monster untuk diberi makan!");
+    return;
+  }
+
+  if (playerData.food <= 0) {
+    alert("Makanan habis! Beli makanan di toko.");
+    return;
+  }
+
+  playerData.food--;
+  playerData.coins += 5;
+
+  renderGame();
+  alert("Monster berhasil diberi makan!");
+}
+
+function stealMonster() {
+  if (!spawnedMonster || !spawnVisible) {
+    alert("Tidak ada monster!");
+    return;
+  }
+
+  if (playerData.currentMonster) {
+    alert("Kamu masih membawa monster lain!");
+    return;
+  }
+
+  playerData.currentMonster = {
+    ...spawnedMonster
+  };
+
+  spawnVisible = false;
+  spawnedMonster = null;
+
+  renderSpawn();
+  renderGame();
+  updateSpawnStatus("Monster berhasil diambil. Bawa ke base!");
+}
+
+function jumpPlayer() {
+  alert("⬆️ Kamu melompat!");
+}
+
+function carryMonster() {
+  if (!playerData.currentMonster) {
+    alert("Kamu belum mengambil monster!");
+    return;
+  }
+
+  playerData.inventory.push({
+    ...playerData.currentMonster
+  });
+
+  playerData.currentMonster = null;
+  playerData.coins += 20;
+
+  savePlayer();
+  renderGame();
+
+  alert("Monster berhasil dibawa ke base!");
+}
+
+function releaseMonster() {
+  if (!playerData.currentMonster) {
+    alert("Kamu tidak sedang membawa monster!");
+    return;
+  }
+
+  playerData.currentMonster = null;
+  renderGame();
+  alert("Monster dilepaskan!");
+}
+
+// ===============================
+// KOLEKSI DAN JUAL MONSTER
+// ===============================
+
+function sellMonster(index) {
+  const monster = playerData.inventory[index];
+
+  if (!monster) return;
+
+  const price = monster.value * monster.level;
+
+  if (!confirm("Jual " + monster.name + " seharga " + price + " koin?")) {
+    return;
+  }
+
+  playerData.coins += price;
+  playerData.inventory.splice(index, 1);
+
+  savePlayer();
+  renderGame();
+}
+
+function renderInventory() {
+  const area = $("inventoryList");
+  if (!area) return;
+
+  if (playerData.inventory.length === 0) {
+    area.innerHTML = "<p>Koleksi masih kosong.</p>";
+    return;
+  }
+
+  area.innerHTML = playerData.inventory.map((monster, index) => `
+    <div class="monster-card">
+      <b>${monster.name}</b>
+      <p>${monster.rarity} | Level ${monster.level}</p>
+      <p>Nilai: ${monster.value}</p>
+      <button onclick="sellMonster(${index})">Jual</button>
+    </div>
+  `).join("");
+}
+
+// ===============================
+// TELUR
+// ===============================
+
+function buyEgg() {
+  if (playerData.coins < 100) {
+    alert("Koin tidak cukup!");
+    return;
+  }
+
+  playerData.coins -= 100;
+
+  const egg = {
+    id: Date.now(),
+    ready: false,
+    monster: monsters[
+      Math.floor(Math.random() * monsters.length)
+    ]
+  };
+
+  playerData.eggs.push(egg);
+  savePlayer();
+  renderGame();
+
+  setTimeout(() => {
+    const found = playerData.eggs.find(e => e.id === egg.id);
+    if (found) {
+      found.ready = true;
+      savePlayer();
+      renderGame();
+    }
+  }, 60000);
+
+  alert("Telur dibeli! Menetas dalam 1 menit.");
+}
+
+function hatchEgg(id) {
+  const index = playerData.eggs.findIndex(e => e.id === id);
+  if (index < 0) return;
+
+  const egg = playerData.eggs[index];
+
+  if (!egg.ready) {
+    alert("Telur belum siap menetas!");
+    return;
+  }
+
+  playerData.inventory.push({
+    ...egg.monster
+  });
+
+  playerData.eggs.splice(index, 1);
+
+  savePlayer();
+  renderGame();
+  alert("Selamat! Monster baru didapatkan!");
+}
+
+function renderEggs() {
+  const area = $("eggList");
+  if (!area) return;
+
+  area.innerHTML = `
+    <button onclick="buyEgg()">🥚 Beli Telur (100 koin)</button>
+    ${playerData.eggs.map(egg => `
+      <div class="monster-card">
+        <p>🥚 Telur Monster</p>
+        <p>${egg.ready ? "Siap menetas!" : "Sedang menetas..."}</p>
+        <button onclick="hatchEgg(${egg.id})">Menetas</button>
+      </div>
+    `).join("")}
+  `;
+}
+
+// ===============================
+// TOKO MAKANAN
+// ===============================
+
+function buyFood() {
+  if (playerData.coins < 25) {
+    alert("Koin tidak cukup!");
+    return;
+  }
+
+  playerData.coins -= 25;
+  playerData.food++;
+
+  savePlayer();
+  renderGame();
+  alert("Berhasil membeli makanan!");
+}
+
+// ===============================
+// TREADMILL
+// ===============================
+
+function upgradeTreadmill() {
+  if (playerData.treadmill >= 20) {
+    alert("Treadmill sudah level maksimal!");
+    return;
+  }
+
+  const price = playerData.treadmill * 100;
+
+  if (playerData.coins < price) {
+    alert("Koin tidak cukup! Harga upgrade: " + price);
+    return;
+  }
+
+  playerData.coins -= price;
+  playerData.treadmill++;
+
+  savePlayer();
+  renderGame();
+
+  alert("Treadmill naik ke level " + playerData.treadmill + "!");
+}
+
+// ===============================
+// RENDER STATUS
+// ===============================
+
+function renderGame() {
+  if ($("coinCount")) {
+    $("coinCount").textContent = playerData.coins;
+  }
+
+  if ($("foodCount")) {
+    $("foodCount").textContent = playerData.food;
+  }
+
+  if ($("levelCount")) {
+    $("levelCount").textContent = playerData.level;
+  }
+
+  if ($("treadmillCount")) {
+    $("treadmillCount").textContent = playerData.treadmill;
+  }
+
+  renderInventory();
+  renderEggs();
+  renderSpawn();
+  savePlayer();
+}
+
+// ===============================
+// MULAI GAME
+// ===============================
+
+function startGame() {
+  createGameUI();
+  renderGame();
+
+  if (!spawnedMonster && !spawnTimer) {
+    spawnNewMonster();
+  }
+}
+</script>
+
+<script>
+// ===================================
+// MONSTER SNATCH - ADMIN DAN EVENT
+// ===================================
+
+let sharedMonsters = {};
+let sharedEvents = {};
+let sharedListenersStarted = false;
+
+// AMANKAN TEKS HTML
+function safeText(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
+// ===================================
+// TAMPILAN ADMIN
+// ===================================
+
+function setupAdminUI() {
+  const game = $("gamePanel");
+  if (!game || $("adminPanel")) return;
+
+  const panel = document.createElement("div");
+  panel.id = "adminPanel";
+  panel.className = "game-box";
+
+  panel.innerHTML = `
+    <h2>👑 ADMIN PANEL</h2>
+
+    <h3>🐲 Buat Monster Bersama</h3>
+    <input id="newMonsterName" placeholder="Nama monster">
+    <select id="newMonsterRarity">
+      <option>Common</option>
+      <option>Rare</option>
+      <option>Epic</option>
+      <option>Legendary</option>
+      <option>Mutasi</option>
+    </select>
+
+    <select id="newMonsterBiome">
+      ${biomes.map(b => `<option>${safeText(b)}</option>`).join("")}
+    </select>
+
+    <input id="newMonsterValue" type="number" min="1"
+      placeholder="Nilai monster">
+
+    <button onclick="createSharedMonster()">
+      Buat Monster
+    </button>
+
+    <h3>📋 Monster Buatan Admin</h3>
+    <div id="adminMonsterList"></div>
+
+    <hr>
+
+    <h3>🎉 Buat Event</h3>
+    <input id="eventName" placeholder="Nama event">
+    <input id="eventTheme" placeholder="Tema event">
+    <input id="eventDuration" type="number" min="1"
+      placeholder="Durasi event (menit)">
+
+    <button onclick="createSharedEvent()">
+      Buat Event
+    </button>
+
+    <h3>📅 Daftar Event Admin</h3>
+    <div id="adminEventList"></div>
+  `;
+
+  game.appendChild(panel);
+  panel.classList.toggle("hidden", !isAdmin);
+}
+
+// ===================================
+// SINKRONISASI FIREBASE
+// ===================================
+
+function listenSharedData() {
+  if (!db || !currentUser || sharedListenersStarted) return;
+
+  sharedListenersStarted = true;
+
+  db.ref("sharedMonsters").on("value", snapshot => {
+    sharedMonsters = snapshot.val() || {};
+    renderSharedMonsters();
+  }, error => {
+    console.error("Monster Firebase:", error);
+  });
+
+  db.ref("events").on("value", snapshot => {
+    sharedEvents = snapshot.val() || {};
+    renderSharedEvents();
+  }, error => {
+    console.error("Event Firebase:", error);
+  });
+}
+
+// ===================================
+// BUAT MONSTER BERSAMA
+// ===================================
+
+async function createSharedMonster() {
+  if (!isAdmin || !currentUser || !db) {
+    alert("Hanya admin yang bisa membuat monster!");
+    return;
+  }
+
+  const name = $("newMonsterName")?.value.trim();
+  const rarity = $("newMonsterRarity")?.value;
+  const biome = $("newMonsterBiome")?.value;
+  const value = Number($("newMonsterValue")?.value);
+
+  if (!name || !value || value < 1) {
+    alert("Isi nama dan nilai monster dengan benar!");
+    return;
+  }
+
+  try {
+    await db.ref("sharedMonsters").push({
+      name,
+      rarity,
+      biome,
+      value,
+      createdAt: Date.now(),
+      createdBy: currentUser.uid
+    });
+
+    $("newMonsterName").value = "";
+    $("newMonsterValue").value = "";
+
+    alert("Monster berhasil dibuat dan dibagikan!");
+  } catch (error) {
+    alert("Gagal membuat monster: " + error.message);
+  }
+}
+
+// ===================================
+// TAMPILKAN MONSTER BERSAMA
+// ===================================
+
+function renderSharedMonsters() {
+  const area = $("adminMonsterList");
+  if (area) {
+    area.innerHTML = Object.entries(sharedMonsters).map(([id, m]) => `
+      <div class="monster-card">
+        <b>${safeText(m.name)}</b>
+        <p>${safeText(m.rarity)} | ${safeText(m.biome)}</p>
+        <p>Nilai: ${Number(m.value) || 0}</p>
+        ${isAdmin ? `
+          <button onclick="deleteSharedMonster('${safeText(id)}')">
+            Hapus
+          </button>
+        ` : ""}
+      </div>
+    `).join("") || "<p>Belum ada monster buatan admin.</p>";
+  }
+
+  let publicArea = $("sharedMonsterList");
+
+  if (!publicArea) {
+    const game = $("gameContent");
+    if (!game) return;
+
+    publicArea = document.createElement("div");
+    publicArea.id = "sharedMonsterList";
+    publicArea.className = "game-box";
+
+    const eventArea = $("eventList");
+    if (eventArea) {
+      eventArea.parentNode.insertBefore(publicArea, eventArea);
+    } else {
+      game.appendChild(publicArea);
+    }
+  }
+
+  publicArea.innerHTML = `
+    <h3>🌟 Monster Khusus Admin</h3>
+    ${Object.values(sharedMonsters).map(m => `
+      <div class="monster-card">
+        <b>🐲 ${safeText(m.name)}</b>
+        <p>${safeText(m.rarity)} | ${safeText(m.biome)}</p>
+        <p>Nilai: ${Number(m.value) || 0}</p>
+      </div>
+    `).join("") || "<p>Belum ada monster khusus.</p>"}
+  `;
+}
+
+// ===================================
+// HAPUS MONSTER
+// ===================================
+
+async function deleteSharedMonster(id) {
+  if (!isAdmin || !db) {
+    alert("Hanya admin yang bisa menghapus monster!");
+    return;
+  }
+
+  if (!confirm("Yakin ingin menghapus monster ini?")) return;
+
+  try {
+    await db.ref("sharedMonsters/" + id).remove();
+    alert("Monster berhasil dihapus!");
+  } catch (error) {
+    alert("Gagal menghapus: " + error.message);
+  }
+}
+
+// ===================================
+// BUAT EVENT BERSAMA
+// ===================================
+
+async function createSharedEvent() {
+  if (!isAdmin || !currentUser || !db) {
+    alert("Hanya admin yang bisa membuat event!");
+    return;
+  }
+
+  const name = $("eventName")?.value.trim();
+  const theme = $("eventTheme")?.value.trim();
+  const duration = Number($("eventDuration")?.value);
+
+  if (!name || !theme || !duration || duration < 1) {
+    alert("Isi nama, tema, dan durasi event!");
+    return;
+  }
+
+  try {
+    await db.ref("events").push({
+      name,
+      theme,
+      duration,
+      createdAt: Date.now(),
+      endsAt: Date.now() + duration * 60000,
+      createdBy: currentUser.uid
+    });
+
+    $("eventName").value = "";
+    $("eventTheme").value = "";
+    $("eventDuration").value = "";
+
+    alert("Event berhasil dibuat dan dibagikan!");
+  } catch (error) {
+    alert("Gagal membuat event: " + error.message);
+  }
+}
+
+// ===================================
+// TAMPILKAN EVENT
+// ===================================
+
+function renderSharedEvents() {
+  const events = Object.entries(sharedEvents);
+
+  const html = events.map(([id, event]) => {
+    const remaining = Math.max(
+      0,
+      Math.ceil((Number(event.endsAt) - Date.now()) / 60000)
+    );
+
+    return `
+      <div class="monster-card">
+        <h3>🎉 ${safeText(event.name)}</h3>
+        <p>Tema: ${safeText(event.theme)}</p>
+        <p>Durasi: ${Number(event.duration) || 0} menit</p>
+        <p>${remaining > 0
+          ? "Berlangsung - " + remaining + " menit tersisa"
+          : "Event selesai"}
+        </p>
+        ${isAdmin ? `
+          <button onclick="deleteSharedEvent('${safeText(id)}')">
+            Hapus Event
+          </button>
+        ` : ""}
+      </div>
+    `;
+  }).join("") || "<p>Belum ada event.</p>";
+
+  const publicArea = $("eventList");
+  if (publicArea) publicArea.innerHTML = html;
+
+  const adminArea = $("adminEventList");
+  if (adminArea) adminArea.innerHTML = html;
+}
+
+// ===================================
+// HAPUS EVENT
+// ===================================
+
+async function deleteSharedEvent(id) {
+  if (!isAdmin || !db) {
+    alert("Hanya admin yang bisa menghapus event!");
+    return;
+  }
+
+  if (!confirm("Yakin ingin menghapus event ini?")) return;
+
+  try {
+    await db.ref("events/" + id).remove();
+    alert("Event berhasil dihapus!");
+  } catch (error) {
+    alert("Gagal menghapus event: " + error.message);
+  }
+}
+
+// ===================================
+// HUBUNGKAN DENGAN GAME
+// ===================================
+
+const originalStartGame = startGame;
+
+startGame = function() {
+  originalStartGame();
+
+  setupAdminUI();
+  listenSharedData();
+  renderSharedMonsters();
+  renderSharedEvents();
+};
+
+// ===================================
+// UPDATE STATUS EVENT
+// ===================================
+
+setInterval(() => {
+  if (currentUser) renderSharedEvents();
+}, 10000);
+
+</script>
+
+</body>
+</html>
